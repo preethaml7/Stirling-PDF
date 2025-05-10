@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +16,8 @@ import io.github.pixee.security.Filenames;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import lombok.RequiredArgsConstructor;
+
 import stirling.software.SPDF.model.api.security.AddPasswordRequest;
 import stirling.software.SPDF.model.api.security.PDFPasswordRequest;
 import stirling.software.SPDF.service.CustomPDFDocumentFactory;
@@ -25,14 +26,10 @@ import stirling.software.SPDF.utils.WebResponseUtils;
 @RestController
 @RequestMapping("/api/v1/security")
 @Tag(name = "Security", description = "Security APIs")
+@RequiredArgsConstructor
 public class PasswordController {
 
     private final CustomPDFDocumentFactory pdfDocumentFactory;
-
-    @Autowired
-    public PasswordController(CustomPDFDocumentFactory pdfDocumentFactory) {
-        this.pdfDocumentFactory = pdfDocumentFactory;
-    }
 
     @PostMapping(consumes = "multipart/form-data", value = "/remove-password")
     @Operation(
@@ -66,25 +63,25 @@ public class PasswordController {
         String ownerPassword = request.getOwnerPassword();
         String password = request.getPassword();
         int keyLength = request.getKeyLength();
-        boolean canAssembleDocument = request.isCanAssembleDocument();
-        boolean canExtractContent = request.isCanExtractContent();
-        boolean canExtractForAccessibility = request.isCanExtractForAccessibility();
-        boolean canFillInForm = request.isCanFillInForm();
-        boolean canModify = request.isCanModify();
-        boolean canModifyAnnotations = request.isCanModifyAnnotations();
-        boolean canPrint = request.isCanPrint();
-        boolean canPrintFaithful = request.isCanPrintFaithful();
+        boolean preventAssembly = request.isPreventAssembly();
+        boolean preventExtractContent = request.isPreventExtractContent();
+        boolean preventExtractForAccessibility = request.isPreventExtractForAccessibility();
+        boolean preventFillInForm = request.isPreventFillInForm();
+        boolean preventModify = request.isPreventModify();
+        boolean preventModifyAnnotations = request.isPreventModifyAnnotations();
+        boolean preventPrinting = request.isPreventPrinting();
+        boolean preventPrintingFaithful = request.isPreventPrintingFaithful();
 
         PDDocument document = pdfDocumentFactory.load(fileInput);
         AccessPermission ap = new AccessPermission();
-        ap.setCanAssembleDocument(!canAssembleDocument);
-        ap.setCanExtractContent(!canExtractContent);
-        ap.setCanExtractForAccessibility(!canExtractForAccessibility);
-        ap.setCanFillInForm(!canFillInForm);
-        ap.setCanModify(!canModify);
-        ap.setCanModifyAnnotations(!canModifyAnnotations);
-        ap.setCanPrint(!canPrint);
-        ap.setCanPrintFaithful(!canPrintFaithful);
+        ap.setCanAssembleDocument(!preventAssembly);
+        ap.setCanExtractContent(!preventExtractContent);
+        ap.setCanExtractForAccessibility(!preventExtractForAccessibility);
+        ap.setCanFillInForm(!preventFillInForm);
+        ap.setCanModify(!preventModify);
+        ap.setCanModifyAnnotations(!preventModifyAnnotations);
+        ap.setCanPrint(!preventPrinting);
+        ap.setCanPrintFaithful(!preventPrintingFaithful);
         StandardProtectionPolicy spp = new StandardProtectionPolicy(ownerPassword, password, ap);
 
         if (!"".equals(ownerPassword) || !"".equals(password)) {
