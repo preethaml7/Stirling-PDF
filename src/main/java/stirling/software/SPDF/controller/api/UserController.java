@@ -3,7 +3,6 @@ package stirling.software.SPDF.controller.api;
 import java.io.IOException;
 import java.security.Principal;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import stirling.software.SPDF.config.security.UserService;
@@ -43,21 +43,13 @@ import stirling.software.SPDF.model.exception.UnsupportedProviderException;
 @Tag(name = "User", description = "User APIs")
 @RequestMapping("/api/v1/user")
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
 
     private static final String LOGIN_MESSAGETYPE_CREDSUPDATED = "/login?messageType=credsUpdated";
     private final UserService userService;
     private final SessionPersistentRegistry sessionRegistry;
     private final ApplicationProperties applicationProperties;
-
-    public UserController(
-            UserService userService,
-            SessionPersistentRegistry sessionRegistry,
-            ApplicationProperties applicationProperties) {
-        this.userService = userService;
-        this.sessionRegistry = sessionRegistry;
-        this.applicationProperties = applicationProperties;
-    }
 
     @PreAuthorize("!hasAuthority('ROLE_DEMO_USER')")
     @PostMapping("/register")
@@ -175,13 +167,23 @@ public class UserController {
 
     @PreAuthorize("!hasAuthority('ROLE_DEMO_USER')")
     @PostMapping("/updateUserSettings")
-    public String updateUserSettings(HttpServletRequest request, Principal principal)
+    /**
+     * Updates the user settings based on the provided JSON payload.
+     *
+     * @param updates A map containing the settings to update. The expected structure is:
+     *                <ul>
+     *                  <li><b>emailNotifications</b> (optional): "true" or "false" - Enable or disable email notifications.</li>
+     *                  <li><b>theme</b> (optional): "light" or "dark" - Set the user's preferred theme.</li>
+     *                  <li><b>language</b> (optional): A string representing the preferred language (e.g., "en", "fr").</li>
+     *                </ul>
+     *                Keys not listed above will be ignored.
+     * @param principal The currently authenticated user.
+     * @return A redirect string to the account page after updating the settings.
+     * @throws SQLException If a database error occurs.
+     * @throws UnsupportedProviderException If the operation is not supported for the user's provider.
+     */
+    public String updateUserSettings(@RequestBody Map<String, String> updates, Principal principal)
             throws SQLException, UnsupportedProviderException {
-        Map<String, String[]> paramMap = request.getParameterMap();
-        Map<String, String> updates = new HashMap<>();
-        for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
-            updates.put(entry.getKey(), entry.getValue()[0]);
-        }
         log.debug("Processed updates: {}", updates);
         // Assuming you have a method in userService to update the settings for a user
         userService.updateUserSettings(principal.getName(), updates);
